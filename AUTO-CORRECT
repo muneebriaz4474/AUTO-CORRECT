@@ -1,0 +1,257 @@
+import java.util.*;
+import java.io.*;
+
+public class DSA_PRJCT_FA19_BCE_086_Autocorrect {
+    static String wordsFileName = "/Users/macbookpro/IdeaProjects/DSA_Project_Autocorrect/src/words.txt"; // Word list text file
+    static Scanner scanner = new Scanner(System.in);
+    static String[] words; // Word list array
+    static String userWord = ""; // Empty by default
+    static Search search = new Search(); // For binary search
+    static Stack<String> suggestions = new Stack<String>(50);
+
+    public static void main(String[] args) throws IOException {
+        System.out.printf("\n     **************************************************");
+        System.out.println("\n       ----------> AUTOCORRECT SIMULATION <---------- ");
+        System.out.printf("     **************************************************\n\n");
+        loadWords();
+        sort(words);
+        startSimulation();
+    }
+
+    public static void loadWords() {
+        String line = null; // Temp variable for storing one line at a time
+        ArrayList<String> temp = new ArrayList<String>();
+
+        try {
+            FileReader fileReader = new FileReader(wordsFileName);
+            BufferedReader buffReader = new BufferedReader(fileReader);
+
+            while ((line = buffReader.readLine()) != null) {
+                temp.add(line.trim());
+            }
+
+            buffReader.close();
+            words = new String[temp.size()];
+            temp.toArray(words);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static <E extends Comparable<E>> void sort(E[] array) {
+        int n = array.length; // Get length of array
+
+        // Insertion sort
+        for (int i = 1; i < n; i++) {
+            E temp = array[i]; // Save the element at index i
+            int j = i - 1; // Let j be the element one index before i
+
+            // Iterate through array
+            while (j > -1 && (array[j].compareTo(temp) > 0)) {
+                // Insert element at array[j] in proper place
+                array[j + 1] = array[j];
+                j--;
+            }
+
+            // Complete swap
+            array[j + 1] = temp;
+        }
+    }
+
+    public static void startSimulation() throws IOException {
+        File file = new File("/Users/macbookpro/IdeaProjects/DSA_Project_Autocorrect/src/test.txt");
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        while ((userWord = br.readLine()) != null) {
+            System.out.println("   Word : " + "'" + userWord + "'");
+            autoCorrect();
+        }
+
+        br.close();
+    }
+
+    public static void autoCorrect() {
+        int result = Search.binarySearch(words, userWord);
+
+        // First, check for an exact match
+        if (result != -1) {
+            System.out.println("   Correct. Congratulations, you can spell!"
+                    + "\n");
+        }
+        // Else, check if the user's word is an anagram of a dictionary word
+        else {
+            int count = 0;
+            for (String word : words) {
+                char wordStart; // First char of word
+                char userWordStart; // First char of userWord
+                if (!word.isEmpty()) { // If word is NOT empty
+                    wordStart = word.charAt(0);
+                    userWordStart = userWord.charAt(0);
+                    // if (userWordStart == wordStart) // Same starting char
+                    // if (userWord.length() == word.length()) // Same length
+                    //   if (containsAllChars(userWord, word)) // Same chars
+                    //     suggestions.push(word);
+                    if (word.indexOf(userWord) >= 0 && count < 3) {
+                        suggestions.push(word);
+                        count++;
+                    }
+                }
+            }
+
+            if (suggestions.isEmpty()) {
+                System.out.println(" *_*_*_*_ Sorry ! No suggestions Found _*_*_*_* \n");
+            } else {
+                System.out.print(" :: Suggestions :: ---> ");
+                while (!suggestions.isEmpty()) {
+                    System.out.print("[" + suggestions.pop() + "]" + " ");
+                }
+                System.out.println("\n");
+            }
+        }
+    }
+
+    /**
+     * Converts a String to its integer ASCII value.
+     *
+     * @param str String to convert.
+     * @return int Returns integer ASCII value.
+     */
+    public static int toInt(String str) {
+        int asciiValue = 0;
+        for (int i = 0; i < str.length(); i++) {
+            asciiValue += str.charAt(i);
+        }
+
+        return asciiValue;
+    }
+
+    /**
+     * Checks if strTwo contains exclusively all characters from strOne.
+     *
+     * @param strOne String to pull chars from.
+     * @param strTwo String to check for containment.
+     * @return boolean True if strTwo contains all chars of strOne.
+     */
+    public static boolean containsAllChars(String strOne, String strTwo) {
+        Character[] one = strToCharArray(strOne);
+        Character[] two = strToCharArray(strTwo);
+
+        sort(one);
+        sort(two);
+
+        for (int i = 0; i < one.length; i++) {
+            if (Search.binarySearch(two, one[i]) == -1)
+                return false;
+            two[i] = '0';
+        }
+
+        two = strToCharArray(strTwo);
+        sort(two);
+
+        for (int i = 0; i < two.length; i++) {
+            if (Search.binarySearch(one, two[i]) == -1)
+                return false;
+            one[i] = '0';
+        }
+
+        return true;
+    }
+
+    public static Character[] strToCharArray(String str) {
+        Character[] charArray = new Character[str.length()];
+        for (int i = 0; i < str.length(); i++) {
+            charArray[i] = new Character(str.charAt(i));
+        }
+
+        return charArray;
+    }
+
+
+}
+
+class Search {
+    public static <E extends Comparable<E>> int
+    binarySearch(E[] array, E target) {
+        return binarySearch(array, target, 0, array.length - 1);
+    }
+
+    private static <E extends Comparable<E>> int
+
+    binarySearch(E[] array, E target, int low, int high) {
+        if (low > high)
+            return -1;
+
+        int mid = (low + high) / 2;
+
+        int compareValue = array[mid].compareTo(target);
+
+        if (compareValue == 0)
+            return mid;
+        else if (compareValue > 0)
+            return binarySearch(array, target, low, mid - 1);
+        else
+            return binarySearch(array, target, mid + 1, high);
+    }
+}
+
+class Stack<E> {
+    // Variables
+
+    public int count = 0; // Count of elements
+    private int top = -1; // Index of the top element
+    private int capacity; // Maximum capacity
+    private E[] stackArray;
+
+    // Constructor
+
+    public Stack(int capacity) {
+        if (capacity > 0) {
+            this.capacity = capacity;
+            stackArray = (E[]) new Object[capacity];
+        } else {
+            this.capacity = capacity;
+            stackArray = (E[]) new Object[100];
+        }
+    }
+
+    // Methods
+
+    public boolean push(E obj) {
+        if (top == capacity - 1) { // Check if top is larger than capacity
+            // System.out.println("Push of " + obj + " failed! Stack overflow.");
+            return false; // Push failed
+        } else {
+            top++;
+            count++;
+            stackArray[top] = obj; // obj assigned to top of stack
+            return true; // Push succeeded
+        }
+    }
+
+    public E pop() {
+        E returnValue = null;
+
+        if (!isEmpty()) { // If stack is NOT empty
+            returnValue = stackArray[top];
+            stackArray[top] = null; // Remove element at top of stack
+            top--;
+            count--;
+        } else {
+            System.out.println("Pop failed! Stack underflow.");
+        }
+
+        return returnValue;
+    }
+
+    public E peek() {
+        if (isEmpty()) {
+            System.out.println("Peek failed! Stack is empty.");
+            return null;
+        }
+
+        return stackArray[top];
+    }
+
+    public boolean isEmpty() {
+        return (top == -1);
+    }
+}
